@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="id">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>CryptoGames</title>
+<style>
+:root{
+  --bg:#0b0d12; --bg2:#11151d; --panel:#161b25; --panel2:#1d2330;
+  --txt:#e8ecf3; --muted:#8a93a6; --border:#252c3a;
+  --green:#22c55e; --red:#ef4444; --blue:#3b82f6; --orange:#f59e0b;
+  --gold:#f7931a;
+  --male:#3b82f6; --female:#ec4899;
+}
+.light{
+  --bg:#f3f5fa; --bg2:#e9edf5; --panel:#ffffff; --panel2:#f7f9fc;
+  --txt:#0f172a; --muted:#5b6478; --border:#dde3ee;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;user-select:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+
+/* ========== INTRO ========== */
+#intro{position:fixed;inset:0;z-index:100;background:#000;overflow:hidden;transition:opacity 1.2s}
+#intro.gone{opacity:0;pointer-events:none}
+.floor{position:absolute;inset:50% 0 0 0;perspective:600px;overflow:hidden}
+.tiles{position:absolute;inset:0;transform-origin:top center;transform:rotateX(70deg) scale(2.2);
+  background:
+    linear-gradient(#222 1px,transparent 1px) 0 0/80px 80px,
+    linear-gradient(90deg,#222 1px,transparent 1px) 0 0/80px 80px,
+    radial-gradient(ellipse at center top,#2a2a2a,#0a0a0a 70%);
+  animation:tileScroll 4s linear infinite}
+@keyframes tileScroll{from{background-position:0 0,0 0,0 0}to{background-position:0 80px,0 0,0 0}}
+.spotlight{position:absolute;left:50%;top:-10%;width:60vmin;height:120vmin;transform:translateX(-50%);
+  background:radial-gradient(ellipse at top,rgba(247,147,26,.35),transparent 60%);opacity:0;
+  animation:spotOn .8s ease 2.3s forwards}
+@keyframes spotOn{to{opacity:1}}
+.coin{position:absolute;top:50%;left:-15vmin;width:16vmin;height:16vmin;transform:translateY(-50%);
+  animation:rollIn 2.4s cubic-bezier(.25,.46,.45,.94) forwards, dropDown 1s cubic-bezier(.5,0,.5,1) 2.4s forwards;
+  filter:drop-shadow(0 8px 24px rgba(247,147,26,.4))}
+.coin svg{width:100%;height:100%;animation:spin .35s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes rollIn{from{left:-20vmin;transform:translateY(-50%) rotate(0)}
+  to{left:calc(50% - 8vmin);transform:translateY(-50%) rotate(0)}}
+@keyframes dropDown{0%{top:50%;transform:translateY(-50%) scale(1)}
+  35%{top:38%;transform:translateY(-50%) scale(1.05)}
+  55%{top:52%;transform:translateY(-50%) scale(.95)}
+  100%{top:50%;transform:translateY(-50%) scale(1)}}
+.coin.faceup svg{animation:none}
+.introTitle{position:absolute;left:50%;top:72%;transform:translateX(-50%);
+  color:#f7931a;font-size:6vmin;font-weight:900;letter-spacing:.3em;opacity:0;
+  text-shadow:0 0 20px rgba(247,147,26,.6);animation:titleIn .8s ease 3s forwards}
+@keyframes titleIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}
+  to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ========== APP ========== */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(247,147,26,.08), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(59,130,246,.06), transparent 60%),
+    var(--bg)}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+  background:linear-gradient(180deg, rgba(22,27,37,.92), rgba(22,27,37,.78));
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);gap:8px;z-index:5;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 8px 24px -16px #000}
+.light header{background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.8))}
+header .logo{width:34px;height:34px;border-radius:10px;object-fit:cover;background:#000;
+  box-shadow:0 0 0 1px var(--border), 0 0 18px rgba(247,147,26,.25)}
+header .title{font-weight:800;font-size:18px;letter-spacing:.08em;
+  background:linear-gradient(180deg,#ffd27a,#f7931a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header .gear{padding:6px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .2s;color:var(--muted)}
+header .gear:hover{background:var(--panel2);color:var(--gold);transform:rotate(45deg)}
+header .stats{display:flex;gap:10px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+header .stats .stat{display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:8px;
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+  border:1px solid var(--border)}
+header .stats b{color:var(--txt);font-size:12px;font-variant-numeric:tabular-nums}
+header .stats svg{width:13px;height:13px;opacity:.8}
+
+main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.screen{display:none;padding:16px;max-width:900px;margin:0 auto}
+.screen.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ========== HOME (form) ========== */
+#home.active{display:flex;flex-direction:column;align-items:center;gap:22px;padding:36px 16px 60px}
+#home h2{margin:0;font-size:24px;font-weight:800;letter-spacing:.04em;
+  background:linear-gradient(90deg,#f7931a,#ffd27a,#fff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#home .sub{color:var(--muted);font-size:11px;margin-top:-14px;letter-spacing:.3em;text-transform:uppercase}
+
+.genderRow{display:flex;gap:18px}
+.genderBtn{width:104px;height:134px;border-radius:18px;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:8px;transition:all .3s cubic-bezier(.4,0,.2,1);padding:10px;position:relative;overflow:hidden}
+.genderBtn::before{content:"";position:absolute;inset:0;border-radius:18px;padding:1px;
+  background:linear-gradient(135deg,transparent,transparent);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;transition:background .3s}
+.genderBtn:hover{transform:translateY(-4px)}
+.genderBtn.active.male{box-shadow:0 12px 32px -10px rgba(59,130,246,.6), inset 0 0 30px rgba(59,130,246,.12)}
+.genderBtn.active.male::before{background:linear-gradient(135deg,#60a5fa,#1e40af)}
+.genderBtn.active.female{box-shadow:0 12px 32px -10px rgba(236,72,153,.6), inset 0 0 30px rgba(236,72,153,.12)}
+.genderBtn.active.female::before{background:linear-gradient(135deg,#f9a8d4,#9d174d)}
+.genderBtn svg{width:54px;height:74px;transition:transform .3s}
+.genderBtn.active svg{transform:scale(1.05)}
+.genderBtn span{font-size:12px;font-weight:700;letter-spacing:.05em}
+
+/* Age dial */
+.ageWrap{width:min(360px,90vw);height:190px;position:relative;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border-radius:18px;border:1px solid var(--border);overflow:hidden;touch-action:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 12px 30px -16px #000}
+.ageWrap canvas{width:100%;height:100%;display:block;cursor:grab}
+.ageWrap.drag canvas{cursor:grabbing}
+.ageLabel{position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  font-size:10px;color:var(--muted);letter-spacing:.4em}
+.ageValue{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  font-size:30px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;
+  text-shadow:0 0 18px rgba(247,147,26,.5)}
+
+.nameWrap{width:min(360px,90vw);display:flex;flex-direction:column;gap:12px}
+.nameWrap input{width:100%;padding:15px 16px;border-radius:14px;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--border);color:var(--txt);font-size:16px;outline:none;text-align:center;
+  transition:border-color .2s, box-shadow .2s}
+.nameWrap input:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(247,147,26,.15)}
+.startBtn{padding:16px;border-radius:14px;
+  background:linear-gradient(135deg,#f7931a 0%,#ffaa3a 40%,#e07a0d 100%);
+  color:#fff;font-weight:800;font-size:15px;letter-spacing:.25em;opacity:.35;
+  transition:opacity .3s,transform .2s,box-shadow .3s;
+  box-shadow:0 8px 24px -12px rgba(247,147,26,.6)}
+.startBtn.ready{opacity:1}
+.startBtn.ready:hover{transform:translateY(-2px);box-shadow:0 16px 32px -10px rgba(247,147,26,.7)}
+
+/* ========== TABS ========== */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px;
+  background:linear-gradient(180deg,rgba(22,27,37,.78),rgba(22,27,37,.92));
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--border)}
+.tab{padding:10px 4px;border-radius:10px;font-weight:700;font-size:11px;color:#fff;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  transition:transform .2s,filter .2s,box-shadow .2s;
+  filter:saturate(.55) brightness(.6);position:relative;letter-spacing:.05em}
+.tab svg{width:18px;height:18px}
+.tab.active{filter:none;transform:translateY(-2px)}
+.tab.t-gen{background:linear-gradient(180deg,#ef4444,#b91c1c)}
+.tab.t-cry{background:linear-gradient(180deg,#22c55e,#15803d)}
+.tab.t-upg{background:linear-gradient(180deg,#3b82f6,#1e40af)}
+.tab.t-buy{background:linear-gradient(180deg,#f97316,#c2410c)}
+.tab.t-gen.active{box-shadow:0 6px 20px -6px #ef4444}
+.tab.t-cry.active{box-shadow:0 6px 20px -6px #22c55e}
+.tab.t-upg.active{box-shadow:0 6px 20px -6px #3b82f6}
+.tab.t-buy.active{box-shadow:0 6px 20px -6px #f97316}
+
+/* ========== GAME PANELS ========== */
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid var(--border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 8px 24px -16px #000}
+.panel h3{margin:0 0 12px;font-size:12px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;
+  display:flex;align-items:center;gap:8px}
+.panel h3 svg{width:14px;height:14px}
+
+/* Generate Game */
+.genWizard .steps{display:flex;gap:5px;margin-bottom:14px}
+.genWizard .stepDot{flex:1;height:4px;background:var(--border);border-radius:2px;transition:background .3s}
+.genWizard .stepDot.done{background:linear-gradient(90deg,#ef4444,#f7931a)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice{padding:14px;border-radius:12px;background:var(--panel2);border:1px solid var(--border);
+  font-weight:600;text-align:left;font-size:13px;transition:all .2s;position:relative;overflow:hidden}
+.choice:hover{border-color:var(--gold);transform:translateY(-1px)}
+.choice.sel{border-color:var(--gold);background:linear-gradient(135deg,rgba(247,147,26,.18),rgba(247,147,26,.05));
+  box-shadow:0 0 0 1px var(--gold), 0 8px 20px -10px rgba(247,147,26,.5)}
+.choice small{display:block;color:var(--muted);font-weight:400;font-size:11px;margin-top:4px;letter-spacing:.05em}
+.genProgress{margin-top:14px;height:12px;background:var(--panel2);border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.genProgress div{height:100%;background:linear-gradient(90deg,#ef4444,#f7931a,#ffd27a);width:0;transition:width .2s;
+  box-shadow:0 0 12px rgba(247,147,26,.5)}
+.genStatus{text-align:center;font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:.1em}
+
+/* Crypto */
+.cryTabs{display:flex;gap:6px;margin-bottom:12px;padding:4px;background:var(--panel2);border-radius:10px;border:1px solid var(--border)}
+.cryTab{flex:1;padding:9px;border-radius:7px;background:transparent;font-size:12px;font-weight:700;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+.cryTab svg{width:14px;height:14px}
+.cryTab.active{background:linear-gradient(180deg,#22c55e,#15803d);color:#fff;box-shadow:0 4px 12px -4px #22c55e}
+.chartWrap{height:230px;background:#05070d;border-radius:12px;overflow:hidden;position:relative;
+  border:1px solid var(--border);box-shadow:inset 0 0 40px rgba(0,0,0,.6)}
+.chartWrap canvas{width:100%;height:100%;display:block}
+.chartInfo{position:absolute;top:10px;left:12px;font-size:11px;color:#a8b2c8;letter-spacing:.05em}
+.chartInfo b{font-size:18px;display:block;color:var(--gold);font-variant-numeric:tabular-nums;
+  text-shadow:0 0 12px rgba(247,147,26,.4);margin:2px 0}
+.tradeRow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.tradeBtn{padding:12px;border-radius:10px;font-weight:800;font-size:12px;color:#fff;letter-spacing:.15em;
+  transition:transform .15s,filter .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.tradeBtn svg{width:14px;height:14px}
+.tradeBtn:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.tradeBtn.buy{background:linear-gradient(180deg,#22c55e,#15803d);box-shadow:0 6px 16px -8px #22c55e}
+.tradeBtn.sell{background:linear-gradient(180deg,#ef4444,#b91c1c);box-shadow:0 6px 16px -8px #ef4444}
+.tradeBtn.dep{background:linear-gradient(180deg,#64748b,#334155);box-shadow:0 6px 16px -8px #64748b}
+.stockList{max-height:320px;overflow-y:auto;margin-top:12px;border-radius:10px;background:var(--panel2);border:1px solid var(--border)}
+.stockItem{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;
+  border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;transition:background .15s}
+.stockItem:last-child{border-bottom:none}
+.stockItem:hover{background:rgba(255,255,255,.03)}
+.stockItem.active{background:linear-gradient(90deg,rgba(247,147,26,.18),transparent);
+  box-shadow:inset 3px 0 0 var(--gold)}
+.stockItem .nm{font-weight:600}
+.stockItem .pr{font-variant-numeric:tabular-nums;font-weight:700}
+.stockItem .up{color:#22c55e} .stockItem .dn{color:#ef4444}
+.tierBadge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;margin-right:6px;
+  background:linear-gradient(180deg,var(--panel),var(--panel2));color:var(--muted);
+  border:1px solid var(--border);font-weight:700;letter-spacing:.05em}
+
+/* Upgrade */
+.upgRow{display:flex;justify-content:space-between;align-items:center;padding:14px;
+  background:linear-gradient(180deg,var(--panel2),rgba(0,0,0,.1));
+  border-radius:12px;margin-bottom:8px;border:1px solid var(--border);gap:10px}
+.upgRow .nmWrap{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.upgRow .iconBox{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#3b82f6,#1e40af);box-shadow:0 4px 12px -4px #3b82f6;flex-shrink:0}
+.upgRow .iconBox svg{width:22px;height:22px;color:#fff}
+.upgRow .lvl{font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+.upgRow .nm{font-weight:800;font-size:14px;margin:1px 0}
+.upgRow .desc{font-size:11px;color:var(--muted)}
+.upgBtn{padding:11px 14px;border-radius:10px;background:linear-gradient(180deg,#3b82f6,#1e40af);
+  color:#fff;font-weight:800;font-size:12px;letter-spacing:.05em;
+  box-shadow:0 4px 12px -4px #3b82f6;transition:transform .15s,filter .2s;white-space:nowrap}
+.upgBtn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.1)}
+.upgBtn:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.5)}
+
+/* Buy */
+.buySection{margin-bottom:14px}
+.buyList{display:grid;gap:6px;max-height:340px;overflow-y:auto;padding-right:4px}
+.buyItem{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+  padding:11px;background:linear-gradient(180deg,var(--panel2),rgba(0,0,0,.08));
+  border-radius:10px;font-size:12px;border:1px solid var(--border);transition:border-color .2s}
+.buyItem:hover{border-color:rgba(247,147,26,.4)}
+.buyItem .tier{width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(180deg,#f97316,#c2410c);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;letter-spacing:.02em;
+  box-shadow:0 4px 10px -4px #f97316}
+.buyItem .tier.pc{background:linear-gradient(180deg,#3b82f6,#1e40af);box-shadow:0 4px 10px -4px #3b82f6}
+.buyItem .nm{font-weight:700;font-size:13px}
+.buyItem .desc{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.buyItem .own{display:inline-block;background:linear-gradient(180deg,#ffd27a,#f7931a);color:#000;border-radius:10px;padding:1px 7px;
+  font-size:10px;font-weight:800;margin-left:6px}
+.buyItem button{padding:9px 11px;border-radius:8px;
+  background:linear-gradient(180deg,#f97316,#c2410c);color:#fff;font-weight:800;font-size:11px;
+  box-shadow:0 3px 10px -3px #f97316;white-space:nowrap;transition:transform .15s,filter .2s}
+.buyItem button:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.1)}
+.buyItem button:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.5)}
+.buyItem button.pc{background:linear-gradient(180deg,#3b82f6,#1e40af);box-shadow:0 3px 10px -3px #3b82f6}
+
+/* PC slots */
+.pcSlots{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.pcCard{padding:12px;background:linear-gradient(180deg,var(--panel2),rgba(0,0,0,.1));
+  border-radius:10px;font-size:11px;position:relative;border:1px solid var(--border)}
+.pcCard.empty{opacity:.5;border:1px dashed var(--border)}
+.pcCard b{font-size:13px;display:block;margin-bottom:4px;color:var(--gold)}
+.pcCard .mult{color:var(--muted);font-size:10px}
+.pcCard .worker{color:#fff;font-weight:700;margin-top:6px;font-size:11px;
+  padding:4px 8px;background:linear-gradient(180deg,rgba(247,147,26,.2),rgba(247,147,26,.05));
+  border-radius:6px;border:1px solid rgba(247,147,26,.3)}
+.pcCard.empty .worker{background:transparent;border:none;color:var(--muted);padding:4px 0}
+
+/* ========== MODAL ========== */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;
+  justify-content:center;z-index:50;padding:20px;animation:fadeIn .25s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.modal.show{display:flex}
+.modalBox{background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border-radius:20px;padding:22px;width:100%;max-width:420px;
+  max-height:85vh;overflow-y:auto;border:1px solid var(--border);
+  box-shadow:0 30px 60px -20px #000, inset 0 1px 0 rgba(255,255,255,.05)}
+.modalBox h2{margin:0 0 18px;font-size:18px;display:flex;align-items:center;gap:10px;letter-spacing:.04em}
+.modalBox h2 svg{width:20px;height:20px;color:var(--gold)}
+.modalRow{display:flex;justify-content:space-between;align-items:center;padding:12px 0;
+  border-bottom:1px solid var(--border);gap:14px}
+.modalRow:last-child{border-bottom:none}
+.toggle{width:46px;height:26px;background:var(--border);border-radius:13px;position:relative;cursor:pointer;
+  transition:background .2s;flex-shrink:0}
+.toggle.on{background:linear-gradient(180deg,#22c55e,#15803d)}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;
+  background:#fff;transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.toggle.on::after{transform:translateX(20px)}
+.redeem{display:flex;gap:6px;margin-top:8px}
+.redeem input{flex:1;padding:11px;border-radius:9px;background:var(--panel2);border:1px solid var(--border);
+  color:var(--txt);outline:none;text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.redeem input:focus{border-color:var(--gold)}
+.redeem button{padding:11px 16px;border-radius:9px;
+  background:linear-gradient(180deg,#ffd27a,#f7931a);color:#000;font-weight:800;letter-spacing:.05em;
+  box-shadow:0 4px 12px -4px rgba(247,147,26,.6)}
+.closeBtn{margin-top:14px;width:100%;padding:13px;border-radius:11px;background:var(--panel2);font-weight:700;
+  border:1px solid var(--border);letter-spacing:.1em;transition:background .2s}
+.closeBtn:hover{background:var(--panel)}
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--gold);padding:11px 20px;border-radius:11px;z-index:200;font-size:13px;font-weight:700;
+  opacity:0;transition:opacity .3s,bottom .3s;pointer-events:none;
+  box-shadow:0 12px 32px -10px rgba(0,0,0,.6), 0 0 24px -8px rgba(247,147,26,.5)}
+.toast.show{opacity:1;bottom:100px}
+
+.buffTag{background:linear-gradient(180deg,#22c55e,#15803d);color:#fff;padding:4px 9px;border-radius:7px;
+  font-size:10px;font-weight:800;margin-left:6px;letter-spacing:.05em;
+  box-shadow:0 0 12px -2px #22c55e}
+
+
+@media(max-width:480px){
+  header .title{font-size:15px}
+  .choices{grid-template-columns:1fr}
+  .stats{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ INTRO ============ -->
+<div id="intro">
+  <div class="floor"><div class="tiles"></div></div>
+  <div class="spotlight"></div>
+  <div class="coin" id="introCoin">
+    <svg viewBox="0 0 100 100">
+      <defs>
+        <radialGradient id="cg" cx="40%" cy="40%">
+          <stop offset="0%" stop-color="#ffd27a"/>
+          <stop offset="60%" stop-color="#f7931a"/>
+          <stop offset="100%" stop-color="#a85a05"/>
+        </radialGradient>
+      </defs>
+      <circle cx="50" cy="50" r="46" fill="url(#cg)" stroke="#7a4203" stroke-width="2"/>
+      <text x="50" y="68" font-size="55" font-weight="900" text-anchor="middle"
+            font-family="Arial" fill="#fff" stroke="#7a4203" stroke-width="1">₿</text>
+    </svg>
+  </div>
+  <div class="introTitle">CRYPTOGAMES</div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" style="display:none">
+  <header>
+    <img class="logo" src="https://i.imgur.com/dR9LAXn.png" alt="logo" onerror="this.style.background='#f7931a'"/>
+    <div class="title">CryptoGames</div>
+    <div class="stats" id="statBar"></div>
+    <button class="gear" id="gearBtn" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section class="screen active" id="home">
+      <h2>Selamat Datang</h2>
+      <div class="sub">Buat karaktermu untuk mulai</div>
+      <div class="genderRow">
+
+        <button class="genderBtn male" data-g="m">
+          <svg viewBox="0 0 50 70"><circle cx="25" cy="12" r="10" fill="var(--male)"/>
+            <rect x="13" y="22" width="24" height="30" rx="6" fill="var(--male)"/>
+            <rect x="15" y="48" width="8" height="20" rx="3" fill="var(--male)"/>
+            <rect x="27" y="48" width="8" height="20" rx="3" fill="var(--male)"/></svg>
+          <span>Laki-laki</span>
+        </button>
+        <button class="genderBtn female" data-g="f">
+          <svg viewBox="0 0 50 70"><circle cx="25" cy="12" r="10" fill="var(--female)"/>
+            <path d="M25 22 L10 55 L40 55 Z" fill="var(--female)"/>
+            <rect x="18" y="50" width="6" height="18" rx="2" fill="var(--female)"/>
+            <rect x="26" y="50" width="6" height="18" rx="2" fill="var(--female)"/></svg>
+          <span>Perempuan</span>
+        </button>
+      </div>
+
+      <div class="ageWrap" id="ageWrap">
+        <div class="ageLabel">UMUR</div>
+        <canvas id="ageCv" width="720" height="360"></canvas>
+        <div class="ageValue" id="ageVal">18</div>
+      </div>
+
+      <div class="nameWrap">
+        <input id="nameIn" placeholder="Masukkan nama" maxlength="20"/>
+        <button class="startBtn" id="startBtn">START</button>
+      </div>
+    </section>
+
+    <!-- GAME SCREENS -->
+    <section class="screen" id="gameScreen">
+      <!-- panels rendered by JS -->
+      <div id="panelGen" class="gpanel"></div>
+      <div id="panelCry" class="gpanel" style="display:none"></div>
+      <div id="panelUpg" class="gpanel" style="display:none"></div>
+      <div id="panelBuy" class="gpanel" style="display:none"></div>
+    </section>
+  </main>
+
+  <!-- TABS (only in game) -->
+  <nav class="tabs" id="tabs" style="display:none">
+    <button class="tab t-gen active" data-p="Gen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258C21.296 6.91 19.819 5 17.32 5z"/></svg>GENERATE</button>
+    <button class="tab t-cry" data-p="Cry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>CRYPTO</button>
+    <button class="tab t-upg" data-p="Upg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>UPGRADE</button>
+    <button class="tab t-buy" data-p="Buy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>BUY</button>
+
+  </nav>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal" id="setModal">
+  <div class="modalBox">
+    <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Pengaturan</h2>
+
+
+    <div class="modalRow">
+      <div>
+        <div style="font-weight:700">Redeem Code</div>
+        <div style="font-size:11px;color:var(--muted)">Masukkan kode dari developer</div>
+        <div class="redeem"><input id="redeemIn" placeholder="ENTER CODE"/><button id="redeemBtn">Klaim</button></div>
+      </div>
+    </div>
+    <div class="modalRow">
+      <div><div style="font-weight:700">Tema Gelap</div><div style="font-size:11px;color:var(--muted)">Dark / Light</div></div>
+      <div class="toggle on" id="tgTheme"></div>
+    </div>
+    <div class="modalRow">
+      <div><div style="font-weight:700">SFX</div><div style="font-size:11px;color:var(--muted)">Sound effects</div></div>
+      <div class="toggle on" id="tgSfx"></div>
+    </div>
+    <div class="modalRow">
+      <div><div style="font-weight:700">Music</div><div style="font-size:11px;color:var(--muted)">Background music</div></div>
+      <div class="toggle on" id="tgMus"></div>
+    </div>
+    <button class="closeBtn" id="closeSet">Tutup</button>
+  </div>
+</div>
+
+<!-- ============ DEPOSIT MODAL ============ -->
+<div class="modal" id="depModal">
+  <div class="modalBox">
+    <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg>Deposit / Beli Custom</h2>
+
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px" id="depInfo">—</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+      <button class="upgBtn" data-pct="0.1">10%</button>
+      <button class="upgBtn" data-pct="0.25">25%</button>
+      <button class="upgBtn" data-pct="0.5">50%</button>
+      <button class="upgBtn" data-pct="1">MAX</button>
+    </div>
+    <input id="depAmt" placeholder="Jumlah rupiah" inputmode="numeric"
+      style="width:100%;padding:12px;border-radius:10px;background:var(--panel2);border:1px solid var(--border);color:var(--txt);outline:none;font-size:15px;text-align:right;margin-bottom:8px"/>
+    <div id="depPreview" style="font-size:12px;color:var(--gold);text-align:center;margin-bottom:12px">Anda akan dapat: —</div>
+    <div style="display:flex;gap:8px">
+      <button class="closeBtn" id="depCancel" style="flex:1">Batal</button>
+      <button class="closeBtn" id="depConfirm" style="flex:1;background:var(--green);color:#fff">Konfirmasi</button>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================ ICONS (custom SVG, no emoji) ================ */
+const IC = {
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  money:'<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>',
+  btc:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#f7931a"/><text x="12" y="17" font-size="14" font-weight="900" text-anchor="middle" font-family="Arial" fill="#fff">B</text></svg>',
+  bolt:'<svg viewBox="0 0 24 24" fill="#f7931a" stroke="#f7931a" stroke-width="1" stroke-linejoin="round"><path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z"/></svg>',
+  gamepad:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258C21.296 6.91 19.819 5 17.32 5z"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>',
+  cart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>',
+  upgrade:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>',
+  wifi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>',
+  pc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+  worker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M3 22v-1a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7v1"/></svg>',
+  coin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 9h4.5a2.5 2.5 0 0 1 0 5H9m0-5v10m0-5h5"/></svg>',
+  trendUp:'<svg viewBox="0 0 24 24" fill="#22c55e"><path d="M5 15l7-7 7 7H5z"/></svg>',
+  trendDown:'<svg viewBox="0 0 24 24" fill="#ef4444"><path d="M5 9l7 7 7-7H5z"/></svg>',
+  buy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  sell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+  deposit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7 7 7-7"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+  fwd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+  rocket:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.7-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/></svg>',
+};
+function ic(name, cls=''){ return `<span class="ic ${cls}" style="display:inline-flex;align-items:center;line-height:0">${IC[name]||''}</span>`; }
+/* ===== CHILL AMBIENT MUSIC =====
+   Chord pad progression: Am - F - C - G (lofi-ish), slow attack, gentle release.
+   Plus a soft sine "bell" arpeggio on top, and a low sub drone.
+*/
+let musicTimers=[], musicNodes=[];
+function musicStart(){
+  if(!S.mus||musicTimers.length) return;
+  try{
+    const a=audio();
+    musicGain=a.createGain(); musicGain.gain.value=.0; musicGain.connect(a.destination);
+    musicGain.gain.linearRampToValueAtTime(.18, a.currentTime+2.5);
+    musicNodes.push(musicGain);
+
+    // Low sub drone
+    const drone=a.createOscillator(), dg=a.createGain();
+    drone.type='sine'; drone.frequency.value=55;
+    dg.gain.value=.08; drone.connect(dg); dg.connect(musicGain); drone.start();
+    musicNodes.push(drone,dg);
+
+    // Chord progression (Am7, Fmaj7, Cmaj7, G) — root, 3rd, 5th, 7th
+    const chords=[
+      [220.00, 261.63, 329.63, 392.00], // Am7
+      [174.61, 220.00, 261.63, 329.63], // Fmaj7
+      [130.81, 164.81, 196.00, 246.94], // Cmaj7
+      [196.00, 246.94, 293.66, 369.99], // G
+    ];
+    let ci=0;
+    function playChord(){
+      if(!musicGain) return;
+      const now=a.currentTime, ch=chords[ci%chords.length];
+      ch.forEach(f=>{
+        const o=a.createOscillator(), g=a.createGain();
+        o.type='sine'; o.frequency.value=f;
+        // soft detune for warmth
+        const o2=a.createOscillator(), g2=a.createGain();
+        o2.type='triangle'; o2.frequency.value=f*1.005; g2.gain.value=.04;
+        g.gain.setValueAtTime(0,now);
+        g.gain.linearRampToValueAtTime(.06, now+1.2);
+        g.gain.linearRampToValueAtTime(.04, now+3);
+        g.gain.linearRampToValueAtTime(0, now+4);
+        o.connect(g); g.connect(musicGain);
+        o2.connect(g2); g2.connect(musicGain);
+        o.start(now); o.stop(now+4.1);
+        o2.start(now); o2.stop(now+4.1);
+      });
+      ci++;
+    }
+    playChord();
+    musicTimers.push(setInterval(playChord, 4000));
+
+    // Gentle bell arpeggio (random notes from C major pentatonic, sparse)
+    const pent=[523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+    musicTimers.push(setInterval(()=>{
+      if(!musicGain || Math.random()<.45) return;
+      const now=a.currentTime, f=pent[Math.floor(Math.random()*pent.length)];
+      const o=a.createOscillator(), g=a.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0,now);
+      g.gain.linearRampToValueAtTime(.035, now+.02);
+      g.gain.exponentialRampToValueAtTime(.001, now+1.5);
+      o.connect(g); g.connect(musicGain);
+      o.start(now); o.stop(now+1.6);
+    }, 1000));
+  }catch(e){}
+}
+function musicStop(){
+  musicTimers.forEach(t=>clearInterval(t)); musicTimers=[];
+  musicNodes.forEach(n=>{ try{ n.stop&&n.stop(); n.disconnect&&n.disconnect(); }catch{} });
+  musicNodes=[]; musicGain=null;
+}
+
+
+/* ================ STATE ================ */
+const SAVE_KEY='cryptoGamesSave_v1';
+const S = loadSave() || {
+  name:'', gender:'m', age:18,
+  money:0, btc:0, theme:'dark', sfx:true, mus:true, music:true,
+  wifi:1, pc:1,                // upgrade levels
+  workers:{},                  // {tier: count}
+  pcs:[{tier:1,worker:null}],  // owned PCs with assigned worker tier (or 'user')
+  stocks:{},                   // {symbol:{owned, avgPrice}}
+  coins:{},                    // crypto holdings
+  buffUntil:0,                 // 2x money expire
+  redeemed:{},
+  selectedStock:null, selectedCoin:null,
+  genStep:0, genChoices:[null,null,null,null], genProgress:0, genActive:false,
+};
+function loadSave(){ try{return JSON.parse(localStorage.getItem(SAVE_KEY))}catch{return null} }
+function save(){ try{localStorage.setItem(SAVE_KEY, JSON.stringify(S))}catch{} }
+setInterval(save,3000);
+
+/* ================ INTRO ================ */
+setTimeout(()=>sfxCoin(),300);
+setTimeout(()=>sfxCoin(),900);
+setTimeout(()=>{ document.getElementById('introCoin').classList.add('faceup'); sfxDrop(); },2500);
+setTimeout(()=>{ sfx(523,.15,'sine',.2); setTimeout(()=>sfx(659,.15),120); setTimeout(()=>sfx(784,.25),240); },2900);
+setTimeout(()=>{
+  document.getElementById('intro').classList.add('gone');
+  document.getElementById('app').style.display='flex';
+  initHome();
+  setTimeout(()=>document.getElementById('intro').remove(),1300);
+}, 4500);
+
+/* ================ HOME ================ */
+function initHome(){
+  applyTheme();
+  // gender
+  document.querySelectorAll('.genderBtn').forEach(b=>{
+    if(b.dataset.g===S.gender) b.classList.add('active');
+    b.onclick=()=>{
+      document.querySelectorAll('.genderBtn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active'); S.gender=b.dataset.g; sfxClick();
+    };
+  });
+  // name
+  const nm=document.getElementById('nameIn'); nm.value=S.name||'';
+  const sb=document.getElementById('startBtn');
+  function checkName(){ S.name=nm.value.trim(); sb.classList.toggle('ready', S.name.length>=1); }
+  nm.oninput=checkName; checkName();
+  sb.onclick=()=>{ if(S.name.length<1) return; sfxCash(); enterGame(); };
+  // age dial
+  initAgeDial();
+  // gear
+  document.getElementById('gearBtn').onclick=openSettings;
+}
+
+function enterGame(){
+  document.getElementById('home').classList.remove('active');
+  document.getElementById('gameScreen').classList.add('active');
+  document.getElementById('tabs').style.display='grid';
+  musicStart();
+  renderAll(); startLoops();
+}
+
+/* ============ AGE DIAL ============ */
+function initAgeDial(){
+  const wrap=document.getElementById('ageWrap');
+  const cv=document.getElementById('ageCv'), ctx=cv.getContext('2d');
+  const val=document.getElementById('ageVal');
+  let dragging=false, lastX=0;
+  function draw(){
+    const W=cv.width,H=cv.height; ctx.clearRect(0,0,W,H);
+    // semicircle range 1..100, dial offset = age
+    const cx=W/2, cy=H+40, R=H*1.1;
+    // ticks
+    for(let i=1;i<=100;i++){
+      const a = (i - S.age)/100 * Math.PI * 2.2 - Math.PI/2;
+      if(a<-Math.PI||a>0) continue;
+      const x1=cx+Math.cos(a)*(R-30), y1=cy+Math.sin(a)*(R-30);
+      const x2=cx+Math.cos(a)*(R-(i%10===0?60:45)), y2=cy+Math.sin(a)*(R-(i%10===0?60:45));
+      const dist = Math.abs(i - S.age);
+      const alpha = Math.max(0, 1 - dist/30);
+      // fade left side
+      const leftFade = a < -Math.PI/2 ? (a+Math.PI)/(Math.PI/2) : 1;
+      ctx.strokeStyle = `rgba(247,147,26,${alpha*leftFade*0.9})`;
+      ctx.lineWidth = i%10===0?2.5:1.2;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      if(i%10===0 && alpha>.2){
+        ctx.fillStyle=`rgba(232,236,243,${alpha*leftFade})`; ctx.font='14px sans-serif';
+        ctx.textAlign='center';
+        const tx=cx+Math.cos(a)*(R-80), ty=cy+Math.sin(a)*(R-80);
+        ctx.fillText(i,tx,ty);
+      }
+    }
+    // needle (center, pointing up)
+    ctx.strokeStyle='#f7931a'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy-R+20); ctx.stroke();
+    ctx.fillStyle='#f7931a'; ctx.beginPath(); ctx.arc(cx,cy-R+20,5,0,Math.PI*2); ctx.fill();
+    val.textContent = S.age + ' th';
+  }
+  draw();
+  function onDown(e){ dragging=true; wrap.classList.add('drag'); lastX = e.touches?e.touches[0].clientX:e.clientX; }
+  function onMove(e){
+    if(!dragging) return; e.preventDefault();
+    const x = e.touches?e.touches[0].clientX:e.clientX;
+    const dx = x - lastX; lastX = x;
+    S.age = Math.max(1, Math.min(100, S.age - dx*0.3));
+    S.age = Math.round(S.age);
+    draw();
+  }
+  function onUp(){ if(dragging) sfxClick(); dragging=false; wrap.classList.remove('drag'); }
+  cv.addEventListener('mousedown',onDown); window.addEventListener('mousemove',onMove); window.addEventListener('mouseup',onUp);
+  cv.addEventListener('touchstart',onDown,{passive:false}); window.addEventListener('touchmove',onMove,{passive:false}); window.addEventListener('touchend',onUp);
+}
+
+/* ================ SETTINGS ================ */
+function applyTheme(){
+  document.body.classList.toggle('light', S.theme==='light');
+  document.getElementById('tgTheme').classList.toggle('on', S.theme==='dark');
+  document.getElementById('tgSfx').classList.toggle('on', S.sfx);
+  document.getElementById('tgMus').classList.toggle('on', S.mus);
+}
+function openSettings(){ document.getElementById('setModal').classList.add('show'); }
+document.getElementById('closeSet').onclick=()=>document.getElementById('setModal').classList.remove('show');
+document.getElementById('tgTheme').onclick=()=>{ S.theme = S.theme==='dark'?'light':'dark'; applyTheme(); };
+document.getElementById('tgSfx').onclick=()=>{ S.sfx=!S.sfx; applyTheme(); };
+document.getElementById('tgMus').onclick=()=>{ S.mus=!S.mus; applyTheme(); S.mus?musicStart():musicStop(); };
+
+const REDEEM = {
+  'RELEASE':()=>{ S.money+=1_000_000; toast('+Rp 1.000.000'); },
+  'CRYPTO':()=>{ S.buffUntil = Date.now()+30*60*1000; toast('2x Money 30 menit!'); },
+  'BITCOIN':()=>{ S.btc+=0.01; toast('+0.01 BTC'); },
+  'SUPPORT':()=>{ S.money+=1_000_000; toast('+Rp 1.000.000'); },
+};
+document.getElementById('redeemBtn').onclick=()=>{
+  const inp=document.getElementById('redeemIn');
+  const code=inp.value.trim().toUpperCase();
+  if(S.redeemed[code]){ toast('Kode sudah dipakai'); return; }
+  if(REDEEM[code]){ REDEEM[code](); S.redeemed[code]=1; sfxCash(); inp.value=''; renderAll(); }
+  else toast('Kode tidak valid');
+};
+
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+/* ================ DATA ================ */
+const WORKERS = [
+ ['Glitch',1000,100000],['Noobie',1500,150000],['Recruit',2500,275000],['Novice',4000,480000],['Amateur',6500,850000],
+ ['Scout',10000,1400000],['Operator',16000,2400000],['Trooper',25000,4000000],['Scripter',40000,6800000],['Grinder',65000,12000000],
+ ['Vanguard',100000,20000000],['Elite',175000,38000000],['Expert',300000,70000000],['Specialist',500000,125000000],['Master',850000,230000000],
+ ['Grandmaster',1500000,450000000],['Challenger',2700000,860000000],['Hacker',4500000,1500000000],['Cyber Knight',7500000,2700000000],['Commander',12000000,4800000000],
+ ['Legend',20000000,9000000000],['Mythic',35000000,17500000000],['Immortal',60000000,33000000000],['Titan',100000000,60000000000],['Architect',180000000,120000000000],
+ ['Overlord',300000000,240000000000],['Apex',550000000,500000000000],['Supreme',1000000000,1000000000000],['Singularity',2500000000,3000000000000],['Root',5000000000,7500000000000],
+].map((w,i)=>({tier:i+1,name:w[0],rate:w[1],price:w[2]}));
+
+const PCS = [
+ ['Newbie Box',1.2,10000],['Office Rig',1.3,35000],['School Lab Special',1.4,90000],['Dual-Core Pentium',1.5,220000],['Budget Quad-Core',1.6,550000],
+ ['Entry Gaming Rig',1.7,1200000],['RGB Standard',1.8,2800000],['Overclocked Core',1.9,6500000],['Mid-End Fighter',2.0,15000000],['Streamer Setup',2.1,32000000],
+ ['Liquid Cooled',2.3,75000000],['Esport Spec',2.5,180000000],['Dual-GPU Monster',2.7,450000000],['Custom Hardline',2.9,950000000],['Workstation Station',3.2,2200000000],
+ ['Local Blade Server',3.5,5000000000],['Micro-Data Hub',3.8,12000000000],['Cyber-Net Gateway',4.1,28000000000],['AI Training Node',4.4,65000000000],['Cloud Server Cluster',4.7,150000000000],
+ ['Mainframe Core',5.0,320000000000],['Military Supercomputer',5.2,750000000000],['Cryo-Rig Setup',5.4,1800000000000],['Neural Hive',5.6,4200000000000],['Quantum Sandbox',5.8,9500000000000],
+ ['Dark Matter Processor',6.0,22000000000000],['Dyson Node',6.2,50000000000000],['Singularity Core',6.5,120000000000000],['Multiverse Rack',6.8,300000000000000],['Absolute Engine',7.0,750000000000000],
+].map((p,i)=>({tier:i+1,name:p[0],mult:p[1],price:p[2]}));
+
+const STOCK_LIST = [
+ ['VRNL','Vernalta',700000,1000000,3500,1],['KOPI','Kopi Botol Jaya',800000,1200000,4000,1],
+ ['NTFY','Netlify Lite Corp',950000,1400000,4750,1],['VRCL','Vercel Hobbyist',1100000,1600000,5500,1],
+ ['TEHD','Es Teh Digital',1300000,1900000,6500,1],['ANGW','Angkringan Wifi',1500000,2200000,7500,1],
+ ['TMXS','Termux Script Co',1800000,2600000,9000,1],['SKMD','Sketchware Modder',2100000,3000000,10500,1],
+ ['UPIN','UniPin Trader',2500000,3500000,12500,1],['SWRI','Saweria Stream Co',3000000,4200000,15000,1],
+ ['ALGT','Alight Preset Inc',3500000,5000000,17500,1],['GRBL','GrabBike Lombok',4200000,6000000,21000,1],
+ ['RJOK','RajaOngkir Express',5000000,7200000,25000,1],['DANA','Dana Wallet Corp',6000000,8500000,30000,1],
+ ['OVOP','OVO Pay System',7200000,10200000,36000,1],['GOPM','GoPay Micro Fund',8500000,12000000,42500,1],
+ ['WART','Warung Token Inc',10000000,14500000,50000,1],['CHFS','Chilli Flash Sale',12000000,17500000,60000,1],
+ ['MNGA','Manga Scanlation',14500000,21000000,72500,1],['ANID','Anime Streaming ID',17500000,25000000,87500,1],
+ ['BLDS','Blood Strike Indo',25000000,35000000,125000,2],['MLPR','Mobile Legends Pro',30000000,42000000,150000,2],
+ ['RBLX','Roblox Dev Studio',36000000,50000000,180000,2],['HUGF','Hugging Face Asia',43000000,60000000,215000,2],
+ ['CPHL','Copilot Helper',52000000,73000000,260000,2],['INFX','Infinix Global Co',62000000,88000000,310000,2],
+ ['LQDR','Liquid Dark Visual',75000000,105000000,375000,2],['JJTS','Jujutsu Media Inc',90000000,126000000,450000,2],
+ ['OSHI','Oshi No Agency',108000000,150000000,540000,2],['TOOD','TruthOrDare Game',130000000,182000000,650000,2],
+ ['PXAS','Pixel Art Syndicate',155000000,218000000,775000,2],['CYSL','Cyber Security Ltd',185000000,260000000,925000,2],
+ ['CHNS','Cloud Host Nusantara',220000000,310000000,1100000,2],['DMID','Data Mining Indo',265000000,372000000,1325000,2],
+ ['AIPE','AI Prompt Engine',318000000,445000000,1590000,2],['GMRD','Gamer Energy Drink',380000000,532000000,1900000,2],
+ ['ESPA','Esport Arena Group',455000000,638000000,2275000,2],['VGLG','Vanguard Logistic',545000000,764000000,2725000,2],
+ ['MEMF','Meme Factory Corp',655000000,918000000,3275000,2],['VTBA','VTuber Agency ID',785000000,1100000000,3925000,2],
+ ['GHEN','GitHub Enterprise',1100000000,1500000000,5500000,3],['GOOG','Google AI Studio',1300000000,1800000000,6500000,3],
+ ['NRLC','Neural Tech Corp',1600000000,2200000000,8000000,3],['DSKM','DeepSeek Matrix',1900000000,2700000000,9500000,3],
+ ['OAIN','OpenAI Nexus',2300000000,3200000000,11500000,3],['QTCL','Quantum Cloud Co',2700000000,3800000000,13500000,3],
+ ['SAAS','SaaS Automation Inc',3300000000,4600000000,16500000,3],['CRPX','Crypto Exchange X',3900000000,5500000000,19500000,3],
+ ['CYCS','Cyber Core Shield',4700000000,6600000000,23500000,3],['FBRO','Fiber Optic Global',5600000000,7900000000,28000000,3],
+ ['DBMN','Database Monolithic',6700000000,9400000000,33500000,3],['MCFD','Microchip Foundry',8000000000,11200000000,40000000,3],
+ ['LITH','Lithography Tech',9600000000,13500000000,48000000,3],['SBSP','Server Blade Supply',11500000000,16200000000,57500000,3],
+ ['AICC','AI Chatbot Cluster',13800000000,19400000000,69000000,3],['MTVR','Metaverse RealEstate',16500000000,23200000000,82500000,3],
+ ['BIOM','Biometric Security',19800000000,27800000000,99000000,3],['AUTD','Autonomous Drone Co',23700000000,33300000000,118500000,3],
+ ['SMGD','Smart Grid Power',28500000000,40000000000,142500000,3],['SATL','Satellite Internet',34200000000,48000000000,171000000,3],
+ ['APEN','Apex Energy Corp',41e9,57e9,205000000,4],['TITN','Titan Heavy Industry',49e9,69e9,245000000,4],
+ ['MLSP','Military Supercomp',59e9,83e9,295000000,4],['CRYO','Cryo Storage System',71e9,1e11,355000000,4],
+ ['BIOG','BioGen Labs Inc',85e9,1.2e11,425000000,4],['AERO','Aerospace Defense',1.02e11,1.43e11,510000000,4],
+ ['GLOH','Global Logistics Hub',1.22e11,1.71e11,610000000,4],['DPOM','Deep Ocean Mining',1.46e11,2.05e11,730000000,4],
+ ['MGLV','Maglev Rail Network',1.75e11,2.46e11,875000000,4],['FUSN','Fusion Power Plant',2.1e11,2.95e11,1.05e9,4],
+ ['GRPH','Graphene Materials',2.52e11,3.54e11,1.26e9,4],['SLCN','Silicon Syndicate',3.02e11,4.24e11,1.51e9,4],
+ ['CYBL','Cybernetic Limb Co',3.62e11,5.08e11,1.81e9,4],['CLMC','Climate Control Corp',4.35e11,6.1e11,2.175e9,4],
+ ['ORBT','Orbital Elevator Inc',5.22e11,7.32e11,2.61e9,4],['SYNF','Synthetic Food Co',6.26e11,8.78e11,3.13e9,4],
+ ['ANDR','Android Robotics',7.5e11,1e12,3.75e9,4],['ASTR','Asteroid Hunting Co',9e11,1.2e12,4.5e9,4],
+ ['QENC','Quantum Encryption',1.1e12,1.5e12,5.5e9,4],['MGCU','Mega City Utility',1.3e12,1.8e12,6.5e9,4],
+ ['DYSN','Dyson Swarm Energy',1.6e12,2.2e12,8e9,5],['DMAT','Dark Matter Mining',1.9e12,2.7e12,9.5e9,5],
+ ['SING','Singularity Engine',2.3e12,3.2e12,11.5e9,5],['MTVS','Multiverse Server',2.8e12,3.9e12,14e9,5],
+ ['WRMH','Wormhole Transport',3.4e12,4.7e12,17e9,5],['TMWP','Time Warp Logistics',4.1e12,5.7e12,20.5e9,5],
+ ['TRFM','Terraforming Co',4.9e12,6.8e12,24.5e9,5],['STSH','Starship Foundry',5.9e12,8.2e12,29.5e9,5],
+ ['ANTM','Antimatter Fuel Co',7.1e12,9.9e12,35.5e9,5],['GLXY','Galaxy Grid Power',8.5e12,11.9e12,42.5e9,5],
+ ['NBLA','Nebula Gas Extractor',1.02e13,1.43e13,51e9,5],['CHRN','Chronos Laboratory',1.22e13,1.71e13,61e9,5],
+ ['BLKH','Black Hole Lab',1.46e13,2.05e13,73e9,5],['COSR','Cosmic Ray Shield',1.75e13,2.46e13,87.5e9,5],
+ ['GRVM','Gravity Manipulator',2.1e13,2.95e13,105e9,5],['REAL','Reality Bender Inc',2.52e13,3.54e13,126e9,5],
+ ['VOID','Void Matter Tech',3.02e13,4.24e13,151e9,5],['SIMC','Simulation Control',3.62e13,5.08e13,181e9,5],
+ ['MTRX','Matrix Overseer Co',4.35e13,6.1e13,217.5e9,5],['ABSE','Absolute Engine Inc',5.22e13,7.5e13,261e9,5],
+].map(s=>({sym:s[0],name:s[1],min:s[2],max:s[3],rate:s[4],tier:s[5],
+  price:(s[2]+s[3])/2, history:[]}));
+
+const COINS = [
+ {sym:'TMX',name:'TermuxCoin',price:10,min:1,max:500,vol:.18},
+ {sym:'STK',name:'StrikeToken',price:25000,min:5000,max:150000,vol:.12},
+ {sym:'NTG',name:'NetlifyGas',price:5000000,min:2500000,max:15000000,vol:.07},
+ {sym:'CPC',name:'CopilotCore',price:1200000000,min:700000000,max:3500000000,vol:.06},
+ {sym:'SGE',name:'SingularityEther',price:8.5e12,min:4e12,max:4e13,vol:.05},
+];
+COINS.forEach(c=>c.history=[]);
+
+// Seed candles so chart isn't empty
+function seedHistory(arr, vol){
+  for(const a of arr){
+    let p = a.price;
+    a.history = [];
+    for(let i=0;i<35;i++){
+      const o=p;
+      p = Math.max(a.min*0.6, Math.min(a.max*1.3, p*(1+(Math.random()-0.5)*(vol||0.04))));
+      const c=p;
+      const h=Math.max(o,c)*(1+Math.random()*0.015);
+      const l=Math.min(o,c)*(1-Math.random()*0.015);
+      a.history.push({o,h,l,c});
+    }
+    a.price = p;
+  }
+}
+seedHistory(STOCK_LIST, 0.04);
+COINS.forEach(c=>seedHistory([c], c.vol*0.5));
+
+
+
+const GEN_STEPS = [
+ {label:'Tema',opts:['Action','RPG','Puzzle','Horror']},
+ {label:'Genre',opts:['Shooter','Adventure','Strategy','Sandbox']},
+ {label:'Grafis',opts:['Pixel Art','2D HD','3D Low Poly','3D Realistic']},
+ {label:'Mode',opts:['Singleplayer','Multiplayer','Co-op','MMO']},
+];
+
+/* ================ FORMAT ================ */
+function fmt(n){
+  if(n<0) return '-'+fmt(-n);
+  if(n>=1e15)return (n/1e15).toFixed(2)+'Q';
+  if(n>=1e12)return (n/1e12).toFixed(2)+'T';
+  if(n>=1e9) return (n/1e9).toFixed(2)+'B';
+  if(n>=1e6) return (n/1e6).toFixed(2)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+  return Math.floor(n).toString();
+}
+function rp(n){ return 'Rp '+fmt(n); }
+
+/* ================ INCOME ================ */
+function workerRate(){ // /s from workers placed in pcs
+  let total=0;
+  for(const slot of S.pcs){
+    if(!slot.worker) continue;
+    const pc = PCS[slot.tier-1];
+    if(slot.worker==='user'){ total += 1000 * pc.mult; }
+    else { const w=WORKERS[slot.worker-1]; total += w.rate * pc.mult; }
+  }
+  if(S.buffUntil>Date.now()) total*=2;
+  return total;
+}
+
+/* ===== DETERMINISTIC PRICE ENGINE =====
+   Semua pemain melihat candle yang SAMA berdasarkan jam UNIX.
+   Setiap detik = 1 tick. Setiap 5 detik = 1 candle.
+   Drift di-generate dari seeded RNG: hash(symbol) XOR tickIndex.
+*/
+function hashStr(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296; }; }
+function seedRand(sym,tick){ return mulberry32(hashStr(sym) ^ (tick|0))(); }
+
+const CANDLE_SEC = 5;          // 1 candle = 5 detik
+const CANDLE_COUNT = 35;       // tampil 35 candle
+const LOOKBACK_SEC = CANDLE_SEC * CANDLE_COUNT;
+
+function nowSec(){ return Math.floor(Date.now()/1000); }
+
+// Walk price from `LOOKBACK_SEC` detik lalu sampai sekarang (deterministic).
+function computeAllAssets(){
+  const sec = nowSec();
+  const startSec = sec - LOOKBACK_SEC;
+  const assets = STOCK_LIST.concat(COINS);
+  for(const a of assets){
+    const vol = a.vol || 0.025;
+    let p = (a.min + a.max)/2;
+    const ticks = [];
+    for(let s = startSec; s <= sec; s++){
+      const r = seedRand(a.sym, s);
+      p = p * (1 + (r - 0.5) * vol);
+      p = Math.max(a.min*0.4, Math.min(a.max*1.6, p));
+      ticks.push({s, p});
+    }
+    a.price = p;
+    // group jadi candle per CANDLE_SEC detik
+    const candles=[];
+    for(let i=0;i<ticks.length;i+=CANDLE_SEC){
+      const slice = ticks.slice(i, i+CANDLE_SEC);
+      if(!slice.length) continue;
+      const o=slice[0].p, c=slice[slice.length-1].p;
+      let h=o, l=o; for(const t of slice){ if(t.p>h)h=t.p; if(t.p<l)l=t.p; }
+      candles.push({o,h,l,c});
+    }
+    a.history = candles.slice(-CANDLE_COUNT);
+  }
+}
+
+function startLoops(){
+  let last=Date.now();
+  computeAllAssets();
+  setInterval(()=>{
+    const now=Date.now(), dt=(now-last)/1000; last=now;
+    S.money += workerRate()*dt;
+    computeAllAssets();          // recompute setiap detik — selalu jalan
+    renderHeader();
+    if(curPanel==='Cry') renderCrypto(false);
+  },1000);
+
+  // smooth chart redraw
+  setInterval(()=>{ if(curPanel==='Cry') drawChart(); },100);
+}
+
+
+/* ================ HEADER ================ */
+function renderHeader(){
+  const buff = S.buffUntil>Date.now() ? `<span class="buffTag">2x ${Math.ceil((S.buffUntil-Date.now())/60000)}m</span>` : '';
+  document.getElementById('statBar').innerHTML =
+    "<div class=\"stat\">"+IC.money+"<b>"+rp(S.money)+"</b></div>"+
+    "<div class=\"stat\">"+IC.btc+"<b>"+S.btc.toFixed(4)+"</b></div>"+
+    "<div class=\"stat\">"+IC.bolt+"<b>"+fmt(workerRate())+"/s</b></div>"+buff;
+}
+
+/* ================ TABS ================ */
+let curPanel='Gen';
+document.getElementById('tabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t) return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  curPanel=t.dataset.p;
+  ['Gen','Cry','Upg','Buy'].forEach(p=>{
+    document.getElementById('panel'+p).style.display = p===curPanel?'block':'none';
+  });
+  sfxClick();
+  if(curPanel==='Gen') renderGen();
+  if(curPanel==='Cry') renderCrypto(true);
+  if(curPanel==='Upg') renderUpg();
+  if(curPanel==='Buy') renderBuy();
+});
+
+function renderAll(){
+  applyTheme(); renderHeader(); renderGen(); renderUpg(); renderBuy(); renderCrypto(true);
+}
+
+/* ================ GEN GAME ================ */
+function renderGen(){
+  const el=document.getElementById('panelGen');
+  if(S.genActive){
+    el.innerHTML = `<div class="panel">
+      <h3>${IC.gamepad}Membuat Game...</h3>
+      <div class="genStatus">Tema: ${S.genChoices.map((c,i)=>c!==null?GEN_STEPS[i].opts[c]:'-').join(' • ')}</div>
+      <div class="genProgress"><div id="genBar" style="width:${S.genProgress}%"></div></div>
+      <div class="genStatus">Upload: ${S.genProgress.toFixed(0)}% • WiFi Lv.${S.wifi}</div>
+    </div>`;
+    return;
+  }
+  const step=S.genStep;
+  const cur=GEN_STEPS[step];
+  el.innerHTML = `<div class="panel genWizard">
+    <h3>${IC.gamepad}Generate Game · Step ${step+1}/4 · ${cur.label}</h3>
+    <div class="steps">${[0,1,2,3].map(i=>`<div class="stepDot ${i<=step?'done':''}"></div>`).join('')}</div>
+    <div class="choices">${cur.opts.map((o,i)=>`<button class="choice ${S.genChoices[step]===i?'sel':''}" data-i="${i}">${o}<small>Pilihan ${i+1}</small></button>`).join('')}</div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      ${step>0?`<button class="upgBtn" id="genPrev" style="background:linear-gradient(180deg,#64748b,#334155)">${IC.back}Back</button>`:''}
+      <button class="upgBtn" id="genNext" style="flex:1;background:var(--gold);color:#000" ${S.genChoices[step]===null?'disabled':''}>${step===3?`Mulai Buat ${IC.rocket}`:`Next ${IC.fwd}`}</button>
+    </div>
+  </div>`;
+  el.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+    S.genChoices[step]=parseInt(b.dataset.i); sfxClick(); renderGen();
+  });
+  const np=document.getElementById('genNext'); if(np) np.onclick=()=>{
+    if(S.genChoices[step]===null) return;
+    if(step<3){ S.genStep++; renderGen(); }
+    else { startGen(); }
+  };
+  const pp=document.getElementById('genPrev'); if(pp) pp.onclick=()=>{ S.genStep--; renderGen(); };
+}
+function startGen(){
+  S.genActive=true; S.genProgress=0; renderGen();
+  const speed = 1 + S.wifi*0.5;
+  const iv=setInterval(()=>{
+    S.genProgress += speed;
+    if(S.genProgress>=100){
+      clearInterval(iv);
+      // reward
+      const basePc = PCS[S.pc-1].mult;
+      const reward = Math.floor(50000 * basePc * (1 + S.pc*0.5) * (S.buffUntil>Date.now()?2:1));
+      S.money += reward;
+      sfxCash();
+      toast('Game terjual! +'+rp(reward));
+      S.genActive=false; S.genStep=0; S.genChoices=[null,null,null,null];
+      renderGen(); renderHeader();
+    } else {
+      const bar=document.getElementById('genBar');
+      if(bar) bar.style.width=S.genProgress+'%';
+    }
+  }, 200);
+}
+
+/* ================ UPGRADE ================ */
+function upgCost(base,lvl){ return Math.floor(base * Math.pow(1.5, lvl-1)); }
+function renderUpg(){
+  const wifiCost=upgCost(20000,S.wifi);
+  const pcCost=upgCost(50000,S.pc);
+  document.getElementById('panelUpg').innerHTML = `
+    <div class="panel">
+      <h3>${IC.upgrade}Upgrade</h3>
+      <div class="upgRow">
+        <div class="nmWrap"><div class="iconBox">${IC.wifi}</div>
+          <div><div class="lvl">Level ${S.wifi}</div><div class="nm">WiFi</div><div class="desc">Mempercepat upload game</div></div></div>
+        <button class="upgBtn" id="upWifi" ${S.money<wifiCost?'disabled':''}>${rp(wifiCost)}</button>
+      </div>
+      <div class="upgRow">
+        <div class="nmWrap"><div class="iconBox">${IC.pc}</div>
+          <div><div class="lvl">Level ${S.pc}</div><div class="nm">PC Power</div><div class="desc">+harga jual game/detik</div></div></div>
+        <button class="upgBtn" id="upPc" ${S.money<pcCost?'disabled':''}>${rp(pcCost)}</button>
+      </div>
+    </div>`;
+  document.getElementById('upWifi').onclick=()=>{ if(S.money>=wifiCost){ S.money-=wifiCost; S.wifi++; sfxCash(); renderUpg(); renderHeader(); } };
+  document.getElementById('upPc').onclick=()=>{ if(S.money>=pcCost){ S.money-=pcCost; S.pc++; sfxCash(); renderUpg(); renderHeader(); } };
+}
+
+/* ================ BUY ================ */
+function renderBuy(){
+  const own = S.workers;
+  const html = `
+    <div class="panel buySection">
+      <h3>${IC.pc}PC Slots (${S.pcs.length})</h3>
+      <div class="pcSlots">
+        ${S.pcs.map((slot,i)=>`<div class="pcCard ${slot.worker?'':'empty'}">
+          <b>PC #${i+1}</b>
+          ${PCS[slot.tier-1].name}<br>×${PCS[slot.tier-1].mult}
+          <div class="worker">${slot.worker===`user`?IC.user+`You`:slot.worker?IC.worker+WORKERS[slot.worker-1].name:`(kosong)`}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="panel buySection">
+      <h3>${IC.pc}Beli PC Baru</h3>
+      <div class="buyList">
+        ${PCS.map(p=>`<div class="buyItem">
+          <div class="tier" style="background:#2563eb">P${p.tier}</div>
+          <div><div class="nm">${p.name}</div><div class="desc">Multiplier ×${p.mult}</div></div>
+          <button data-pc="${p.tier}" ${S.money<p.price?'disabled':''}>${rp(p.price)}</button>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="panel buySection">
+      <h3>${IC.worker}Beli Karyawan</h3>
+      <div class="buyList">
+        ${WORKERS.map(w=>`<div class="buyItem">
+          <div class="tier">L${w.tier}</div>
+          <div><div class="nm">${w.name}${own[w.tier]?`<span class="own">×${own[w.tier]}</span>`:''}</div><div class="desc">${fmt(w.rate)}/s</div></div>
+          <button data-wk="${w.tier}" ${S.money<w.price?'disabled':''}>${rp(w.price)}</button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('panelBuy').innerHTML = html;
+  document.querySelectorAll('[data-pc]').forEach(b=>b.onclick=()=>{
+    const t=+b.dataset.pc, p=PCS[t-1];
+    if(S.money<p.price) return;
+    S.money-=p.price; S.pcs.push({tier:t,worker:null}); sfxCash(); renderBuy(); renderHeader();
+  });
+  document.querySelectorAll('[data-wk]').forEach(b=>b.onclick=()=>{
+    const t=+b.dataset.wk, w=WORKERS[t-1];
+    if(S.money<w.price) return;
+    S.money-=w.price; S.workers[t]=(S.workers[t]||0)+1;
+    // auto-assign to first empty pc
+    const slot=S.pcs.find(s=>!s.worker);
+    if(slot) slot.worker=t;
+    sfxCash(); renderBuy(); renderHeader();
+  });
+}
+
+/* ================ CRYPTO ================ */
+let cryMode='stocks'; // stocks | coins
+function renderCrypto(rebuild){
+  const el=document.getElementById('panelCry');
+  if(rebuild || !el.innerHTML){
+    el.innerHTML = `
+      <div class="panel">
+        <div class="cryTabs">
+          <button class="cryTab ${cryMode==='stocks'?'active':''}" data-m="stocks">${IC.chart}Saham (${STOCK_LIST.length})</button>
+          <button class="cryTab ${cryMode==='coins'?'active':''}" data-m="coins">${IC.coin}Crypto</button>
+        </div>
+        <div class="chartWrap"><canvas id="chartCv"></canvas>
+          <div class="chartInfo" id="chartInfo"></div>
+        </div>
+        <div class="tradeRow">
+          <button class="tradeBtn buy" id="btnBuy">BUY 1</button>
+          <button class="tradeBtn sell" id="btnSell">SELL 1</button>
+          <button class="tradeBtn dep" id="btnDep">DEPOSIT</button>
+        </div>
+        <div class="stockList" id="stockList"></div>
+      </div>`;
+    el.querySelectorAll('.cryTab').forEach(b=>b.onclick=()=>{ cryMode=b.dataset.m; renderCrypto(true); });
+    document.getElementById('btnBuy').onclick=()=>trade('buy');
+    document.getElementById('btnSell').onclick=()=>trade('sell');
+    document.getElementById('btnDep').onclick=openDeposit;
+
+  }
+  // list
+  const list=document.getElementById('stockList');
+  if(cryMode==='stocks'){
+    const sel = S.selectedStock || STOCK_LIST[0].sym;
+    S.selectedStock = sel;
+    list.innerHTML = STOCK_LIST.map(s=>{
+      const own=(S.stocks[s.sym]||{}).owned||0;
+      const last=s.history[s.history.length-2], cur=s.history[s.history.length-1];
+      const up = !last || cur.c>=last.c;
+      return `<div class="stockItem ${s.sym===sel?'active':''}" data-s="${s.sym}">
+        <div><span class="tierBadge">T${s.tier}</span><span class="nm">${s.name}</span>
+          ${own?`<span class="own">×${own}</span>`:''}</div>
+        <div class="pr ${up?'up':'dn'}">${rp(s.price)}</div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.stockItem').forEach(it=>it.onclick=()=>{ S.selectedStock=it.dataset.s; renderCrypto(true); });
+  } else {
+    const sel = S.selectedCoin || COINS[0].sym;
+    S.selectedCoin = sel;
+    list.innerHTML = COINS.map(c=>{
+      const own=(S.coins[c.sym]||{}).owned||0;
+      const last=c.history[c.history.length-2], cur=c.history[c.history.length-1];
+      const up = !last || (cur&&cur.c>=last.c);
+      return `<div class="stockItem ${c.sym===sel?'active':''}" data-s="${c.sym}">
+        <div><span class="tierBadge">${c.sym}</span><span class="nm">${c.name}</span>
+          ${own?`<span class="own">×${own.toFixed(4)}</span>`:''}</div>
+        <div class="pr ${up?'up':'dn'}">${rp(c.price)}</div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.stockItem').forEach(it=>it.onclick=()=>{ S.selectedCoin=it.dataset.s; renderCrypto(true); });
+  }
+  drawChart();
+}
+
+function curAsset(){
+  if(cryMode==='stocks') return STOCK_LIST.find(s=>s.sym===S.selectedStock) || STOCK_LIST[0];
+  return COINS.find(c=>c.sym===S.selectedCoin) || COINS[0];
+}
+
+/* ===== DEPOSIT MODAL ===== */
+function openDeposit(){
+  const a=curAsset();
+  document.getElementById('depInfo').innerHTML =
+    `Aset: <b>${a.name}</b> @ ${rp(a.price)}<br>Saldo Anda: <b>${rp(S.money)}</b>`;
+  document.getElementById('depAmt').value='';
+  updateDepPreview();
+  document.getElementById('depModal').classList.add('show');
+}
+function updateDepPreview(){
+  const a=curAsset();
+  const amt = parseFloat(document.getElementById('depAmt').value)||0;
+  const units = amt / a.price;
+  document.getElementById('depPreview').textContent =
+    `Anda akan dapat: ${units.toFixed(units<1?6:4)} ${a.sym}`;
+}
+document.getElementById('depAmt').addEventListener('input',updateDepPreview);
+document.querySelectorAll('#depModal [data-pct]').forEach(b=>b.onclick=()=>{
+  const pct=parseFloat(b.dataset.pct);
+  document.getElementById('depAmt').value=Math.floor(S.money*pct);
+  updateDepPreview();
+});
+document.getElementById('depCancel').onclick=()=>document.getElementById('depModal').classList.remove('show');
+document.getElementById('depConfirm').onclick=()=>{
+  const a=curAsset();
+  const amt=parseFloat(document.getElementById('depAmt').value)||0;
+  if(amt<=0){ toast('Masukkan jumlah'); return; }
+  if(amt>S.money){ toast('Saldo tidak cukup'); return; }
+  const units = amt/a.price;
+  const isStock = cryMode==='stocks';
+  const bag = isStock?S.stocks:S.coins;
+  bag[a.sym]=bag[a.sym]||{owned:0,avg:0};
+  const b=bag[a.sym];
+  b.avg=(b.avg*b.owned + amt)/(b.owned+units);
+  b.owned += units;
+  S.money -= amt;
+  sfxCash();
+  toast(`+${units.toFixed(4)} ${a.sym}`);
+  document.getElementById('depModal').classList.remove('show');
+  renderCrypto(true); renderHeader();
+};
+
+
+
+function trade(act){
+  const a=curAsset();
+  const isStock = cryMode==='stocks';
+  const bag = isStock?S.stocks:S.coins;
+  if(act==='buy'){
+    if(S.money<a.price){ toast('Uang kurang'); return; }
+    S.money-=a.price;
+    bag[a.sym]=bag[a.sym]||{owned:0,avg:0};
+    const b=bag[a.sym]; b.avg=(b.avg*b.owned+a.price)/(b.owned+1); b.owned+=1;
+    sfxCash();
+  } else {
+    if(!bag[a.sym] || bag[a.sym].owned<1){ toast('Tidak ada untuk dijual'); return; }
+    bag[a.sym].owned-=1; S.money+=a.price; sfxCash();
+  }
+  renderCrypto(true); renderHeader();
+}
+
+function drawChart(){
+  const cv=document.getElementById('chartCv'); if(!cv) return;
+  const ctx=cv.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const rect=cv.getBoundingClientRect();
+  if(cv.width !== rect.width*dpr || cv.height !== rect.height*dpr){
+    cv.width=rect.width*dpr; cv.height=rect.height*dpr;
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W=rect.width, H=rect.height;
+  // bg gradient
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0a0e1a'); bg.addColorStop(1,'#05070d');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const a=curAsset();
+  const hist=a.history;
+  if(!hist.length) return;
+  const padT=20, padB=20, padR=70, padL=10;
+  const chartH=H-padT-padB, chartW=W-padL-padR;
+  const min=Math.min(...hist.map(c=>c.l)), max=Math.max(...hist.map(c=>c.h));
+  const range=(max-min)||1;
+  const yOf=v=>padT+chartH-((v-min)/range)*chartH;
+
+  // grid + price labels
+  ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.lineWidth=1;
+  ctx.fillStyle='rgba(160,170,190,.6)'; ctx.font='10px ui-monospace,monospace';
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){
+    const y=padT+chartH*i/4;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    const v=max-(range*i/4);
+    ctx.fillText(fmt(v), W-padR+6, y);
+  }
+
+  const n=hist.length;
+  const cw=chartW/n;
+  const bodyW=Math.max(2,cw*0.7);
+
+  hist.forEach((c,i)=>{
+    const cx=padL+i*cw+cw/2;
+    const yH=yOf(c.h), yL=yOf(c.l), yO=yOf(c.o), yC=yOf(c.c);
+    const up=c.c>=c.o;
+    const col=up?'#22c55e':'#ef4444';
+    // wick
+    ctx.strokeStyle=col; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(cx,yH); ctx.lineTo(cx,yL); ctx.stroke();
+    // body
+    ctx.fillStyle=col;
+    const top=Math.min(yO,yC), h=Math.max(1.5,Math.abs(yC-yO));
+    ctx.fillRect(cx-bodyW/2, top, bodyW, h);
+  });
+
+  // current price line
+  const yCur=yOf(a.price);
+  ctx.strokeStyle='rgba(247,147,26,.7)'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL,yCur); ctx.lineTo(W-padR,yCur); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#f7931a'; ctx.fillRect(W-padR,yCur-9,padR-4,18);
+  ctx.fillStyle='#000'; ctx.font='bold 10px ui-monospace,monospace';
+  ctx.textAlign='center'; ctx.fillText(fmt(a.price), W-padR/2-2, yCur);
+
+  const last=hist[hist.length-2], cur=hist[hist.length-1];
+  const chg = last? ((cur.c-last.c)/last.c*100):0;
+  document.getElementById('chartInfo').innerHTML =
+    `${a.name}<b>${rp(a.price)}</b><span style="color:${chg>=0?'#22c55e':'#ef4444'}">${chg>=0?`<span style="color:#22c55e">+</span>`:`<span style="color:#ef4444">-</span>`} ${chg.toFixed(2)}%</span>`;
+}
+
+
+/* ================ START ================ */
+// If we have saved name and were past intro, jump in faster:
+window.addEventListener('beforeunload',save);
+</script>
+</body>
+</html>
